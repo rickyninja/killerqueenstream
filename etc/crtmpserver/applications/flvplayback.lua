@@ -54,8 +54,8 @@ application=
 			emulateUserAgent="MAC 10,1,82,76",
 		}]]--
 	},
-	validateHandshake=true,
-	keyframeSeek=true,
+	validateHandshake=false,
+	keyframeSeek=false,
 	seekGranularity=1.5, --in seconds, between 0.1 and 600
 	clientSideBuffer=12, --in seconds, between 5 and 30
 	--generateMetaFiles=true, --this will generate seek/meta files on application startup
