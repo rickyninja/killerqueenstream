@@ -68,7 +68,7 @@ sub capture_cam {
         "-ar", "44100",
         "-ab", "96000",
         "-f", "flv",
-        q{-metadata}, q{streamName="aaa"},
+        q{-metadata}, q{streamName=aaa},
         "tcp://localhost:6666"
     );
     if (system(@args) != 0) {
@@ -85,7 +85,7 @@ sub capture_cam_video_only {
       -framerate 60
       -s 1680x1050
       -f flv
-      -metadata streamName="aaa"
+      -metadata streamName=aaa
       tcp://localhost:6666
     );
     if (system(@args) != 0) {
