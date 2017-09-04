@@ -13,9 +13,24 @@ use warnings;
 
 my $file = shift;
 
+stream_file($file);
 #capture_screen($file);
-capture_cam();
+#capture_cam();
 #capture_cam_video_only();
+
+sub stream_file {
+    my $file = shift || die 'missing file';
+    my @args = (
+        "ffmpeg",
+        "-i $file",
+        "-f", "flv",
+        q{-metadata}, q{streamName="aaa"},
+        "tcp://localhost:6666"
+    );
+    if (system(@args) != 0) {
+        die "system @args failed: $?";
+    }
+}
 
 # screen capture.  my native resolution is 2560x1600
 sub capture_screen {
@@ -38,10 +53,9 @@ sub capture_screen {
             -ar 44100
             -ab 96000
         ),
-        #"-f", "flv",
-        #q{-metadata}, q{streamName="aaa"},
-        #"tcp://localhost:6666"
-        $file
+        "-f", "flv",
+        q{-metadata}, q{streamName="aaa"},
+        "tcp://localhost:6666"
     );
     if (system(@args) != 0) {
         die "system @args failed: $?";
