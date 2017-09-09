@@ -10,6 +10,9 @@ use warnings;
 # command line play stream via ffmpeg tools
 # ffplay -i "rtmp://localhost:1935/live/aaa live=1"
 
+# send file to nginx rtmp
+# ffmpeg -re -i /media/velociraptor1/tivo/minecraft/Blaze\ Farm.mp4 -c:v libx264 -c:a libmp3lame -ar 44100 -ac 1 -f flv rtmp://localhost/myapp/blaze
+
 
 my $file = shift;
 
@@ -22,7 +25,7 @@ sub stream_file {
     my $file = shift || die 'missing file';
     my @args = (
         "ffmpeg",
-        "-i $file",
+        "-i", $file,
         "-f", "flv",
         q{-metadata}, q{streamName="aaa"},
         "tcp://localhost:6666"
