@@ -322,6 +322,7 @@ func getCamDetail(dev string) (kq.Camera, error) {
 		Serial: attr["ID_SERIAL_SHORT"],
 		Model:  attr["ID_MODEL"],
 		Vendor: attr["ID_VENDOR"],
+		IdPath: attr["ID_PATH"],
 		Device: dev,
 	}
 	return cam, nil
