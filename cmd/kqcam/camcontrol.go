@@ -16,7 +16,7 @@ import (
 	"text/template"
 	"time"
 
-	camcontrol "github.com/rickyninja/killerqueencamcontrol"
+	"github.com/rickyninja/killerqueenstream"
 )
 
 var ErrAPILost = errors.New("Failed to find API")
@@ -174,7 +174,7 @@ func configureStream(device, name string) {
 	if name == "" {
 		help()
 	}
-	stream := camcontrol.NewStream()
+	stream := kq.NewStream()
 	stream.Camera.Device = device
 	stream.Name = name
 	b, err := json.Marshal(stream)

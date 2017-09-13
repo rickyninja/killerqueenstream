@@ -1,4 +1,4 @@
-package camcontrol
+package kq
 
 import (
 	"log"

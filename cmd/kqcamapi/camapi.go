@@ -14,7 +14,7 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	camcontrol "github.com/rickyninja/killerqueencamcontrol"
+	"github.com/rickyninja/killerqueenstream"
 )
 
 func main() {
@@ -106,7 +106,7 @@ func ViewStreamConfig(w http.ResponseWriter, r *http.Request, param httprouter.P
 
 func SetStreamConfig(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 	dec := json.NewDecoder(r.Body)
-	stream := camcontrol.NewStream()
+	stream := kq.NewStream()
 	err := dec.Decode(stream)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -133,7 +133,7 @@ func SetStreamConfig(w http.ResponseWriter, r *http.Request, param httprouter.Pa
 }
 
 // track which cameras are running by client provided name (gold, blue, etc.).
-type streamMap map[string]*camcontrol.Stream
+type streamMap map[string]*kq.Stream
 
 type streamInfo struct {
 	sync.Mutex
@@ -273,12 +273,12 @@ E: USEC_INITIALIZED=400948839519
 
 type caminfo map[string]map[string]string
 
-func probeCameras() ([]camcontrol.Camera, error) {
+func probeCameras() ([]kq.Camera, error) {
 	vdevs, err := getVideoDevices()
 	if err != nil {
 		return nil, err
 	}
-	cameras := make([]camcontrol.Camera, 0)
+	cameras := make([]kq.Camera, 0)
 	for _, dev := range vdevs {
 		cam, err := getCamDetail(dev)
 		if err != nil {
@@ -289,8 +289,8 @@ func probeCameras() ([]camcontrol.Camera, error) {
 	return cameras, nil
 }
 
-func getCamDetail(dev string) (camcontrol.Camera, error) {
-	cam := camcontrol.Camera{}
+func getCamDetail(dev string) (kq.Camera, error) {
+	cam := kq.Camera{}
 	attr := make(map[string]string)
 	cmd := exec.Command("udevadm", "info", "--query=all", "--name="+dev)
 	stdout, err := cmd.StdoutPipe()
@@ -318,7 +318,7 @@ func getCamDetail(dev string) (camcontrol.Camera, error) {
 	if err != nil {
 		return cam, err
 	}
-	cam = camcontrol.Camera{
+	cam = kq.Camera{
 		Serial: attr["ID_SERIAL_SHORT"],
 		Model:  attr["ID_MODEL"],
 		Vendor: attr["ID_VENDOR"],
