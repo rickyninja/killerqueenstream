@@ -36,7 +36,7 @@ func NewStream() *Stream {
 		Application:      "killerqueen",
 		Name:             "",
 		Host:             "localhost",
-		ThreadQueueSize:  10485760, // 10MB
+		ThreadQueueSize:  2, // max frames in buffer
 		Preset:           "veryfast",
 		VideoEncoding:    "libx264",
 		VideoInputFormat: "video4linux2",
@@ -63,6 +63,7 @@ func (s *Stream) Start() string {
 			"-f", s.VideoInputFormat,
 			"-i", s.Camera.Device,
 			"-preset", s.Preset,
+			"-tune", "zerolatency",
 			"-c:v", s.VideoEncoding,
 			"-c:a", s.AudioEncoding,
 			"-ar", strconv.Itoa(s.AudioRate),
