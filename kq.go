@@ -19,6 +19,7 @@ type Stream struct {
 	Preset           string    `json:"preset"`
 	VideoEncoding    string    `json:"video_encoding"`
 	VideoInputFormat string    `json:"video_input_format"`
+	VideoResolution  string    `json:"video_resolution"`
 	AudioEncoding    string    `json:"audio_encoding"`
 	AudioInput       string    `json:"audio_input"`
 	AudioRate        int       `json:"audio_rate"`
@@ -40,6 +41,7 @@ func NewStream() *Stream {
 		Preset:           "veryfast",
 		VideoEncoding:    "libx264",
 		VideoInputFormat: "video4linux2",
+		VideoResolution:  "",
 		AudioEncoding:    "aac",
 		AudioInput:       "alsa",
 		AudioRate:        44100,
@@ -55,21 +57,23 @@ func (s *Stream) Start() string {
 	go func() {
 		defer func() { s.Live = false }()
 		s.Live = true
-		args := []string{
-			"-thread_queue_size", strconv.Itoa(s.ThreadQueueSize),
-			"-f", s.AudioInput,
-			"-ac", strconv.Itoa(s.NAudioChannels),
-			"-i", fmt.Sprintf("hw:%d", s.Camera.CardId()),
-			"-f", s.VideoInputFormat,
-			"-i", s.Camera.Device,
-			"-preset", s.Preset,
-			"-tune", "zerolatency",
-			"-c:v", s.VideoEncoding,
-			"-c:a", s.AudioEncoding,
-			"-ar", strconv.Itoa(s.AudioRate),
-			"-ab", strconv.Itoa(s.AverageBitRate),
-			"-f", s.OutputEncoding, uri,
+		args := []string{}
+		args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
+		args = append(args, "-f", s.AudioInput)
+		args = append(args, "-ac", strconv.Itoa(s.NAudioChannels))
+		args = append(args, "-i", fmt.Sprintf("hw:%d", s.Camera.CardId()))
+		args = append(args, "-f", s.VideoInputFormat)
+		args = append(args, "-i", s.Camera.Device)
+		args = append(args, "-preset", s.Preset)
+		args = append(args, "-tune", "zerolatency")
+		if s.VideoResolution != "" {
+			args = append(args, "-vf", "scale="+s.VideoResolution)
 		}
+		args = append(args, "-c:v", s.VideoEncoding)
+		args = append(args, "-c:a", s.AudioEncoding)
+		args = append(args, "-ar", strconv.Itoa(s.AudioRate))
+		args = append(args, "-ab", strconv.Itoa(s.AverageBitRate))
+		args = append(args, "-f", s.OutputEncoding, uri)
 		//log.Printf("%s\n", strings.Join(append([]string{"ffmpeg"}, args...), " "))
 		cmd := exec.Command("ffmpeg", args...)
 		s.cmd = cmd

@@ -22,12 +22,13 @@ import (
 var ErrAPILost = errors.New("Failed to find API")
 
 var (
-	port    int
-	debug   bool
-	action  string
-	device  string
-	apihost string
-	name    string
+	port            int
+	debug           bool
+	action          string
+	device          string
+	apihost         string
+	name            string
+	videoResolution string
 )
 
 var actionDispatch map[string]func()
@@ -38,6 +39,7 @@ func init() {
 	flag.StringVar(&action, "action", "", "Send a cab camera command")
 	flag.StringVar(&device, "device", "", "a camera device, like: /dev/video0")
 	flag.StringVar(&name, "name", "", "the name of a stream")
+	flag.StringVar(&videoResolution, "video-resolution", "", "1920x1080, 1280x720, etc.")
 	flag.Usage = help
 	log.SetFlags(0)
 	log.SetOutput(os.Stderr)
@@ -177,6 +179,7 @@ func configureStream(device, name string) {
 	stream := kq.NewStream()
 	stream.Camera.Device = device
 	stream.Name = name
+	stream.VideoResolution = videoResolution
 	b, err := json.Marshal(stream)
 	if err != nil {
 		log.Fatal(err)
@@ -298,7 +301,7 @@ Examples:
 {{.Program}} -action caminfo
 
 # configure a stream
-{{.Program}} -action setconfig -device /dev/video0 -name gold
+{{.Program}} -action setconfig -device /dev/video0 -name gold -video-resolution 1920x1080
 
 # show stream configs
 {{.Program}} -action getconfig
