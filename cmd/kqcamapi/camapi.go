@@ -155,21 +155,18 @@ func StartCam(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 		http.Error(w, fmt.Sprintf("Failed to find stream by %s.  Did you configure the stream?", name), http.StatusInternalServerError)
 		return
 	}
-	uriStr := stream.Start()
-	uri, err := url.Parse(uriStr)
+	start := stream.Start()
+	uri, err := url.Parse(start.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	uri.Host = r.Host
+	start.URL = uri.String()
 
-	resp := map[string]string{
-		"status": "on",
-		"url":    uri.String(),
-	}
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "    ")
-	err = enc.Encode(resp)
+	err = enc.Encode(start)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

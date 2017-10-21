@@ -20,6 +20,7 @@ type Stream struct {
 	VideoEncoding    string    `json:"video_encoding"`
 	VideoInputFormat string    `json:"video_input_format"`
 	VideoResolution  string    `json:"video_resolution"`
+	AudioDisabled    bool      `json:"audio_disabled"`
 	AudioEncoding    string    `json:"audio_encoding"`
 	AudioInput       string    `json:"audio_input"`
 	AudioRate        int       `json:"audio_rate"`
@@ -37,7 +38,7 @@ func NewStream() *Stream {
 		Application:      "killerqueen",
 		Name:             "",
 		Host:             "localhost",
-		ThreadQueueSize:  2, // max frames in buffer
+		ThreadQueueSize:  1024, // max frames in buffer
 		Preset:           "veryfast",
 		VideoEncoding:    "libx264",
 		VideoInputFormat: "video4linux2",
@@ -51,38 +52,52 @@ func NewStream() *Stream {
 	}
 }
 
+type startResponse struct {
+	Status string `json:"status"`
+	URL    string `json:"url"`
+	Cmd    string `json:"cmd"`
+}
+
 // Start begins streaming a camera to an rtmp server.
-func (s *Stream) Start() string {
+func (s *Stream) Start() startResponse {
 	uri := "rtmp://" + s.Host + "/" + s.Application + "/" + s.Name
-	go func() {
-		defer func() { s.Live = false }()
-		s.Live = true
-		args := []string{}
-		args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
+	resp := startResponse{
+		URL: uri,
+	}
+	args := []string{}
+	args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
+	if !s.AudioDisabled {
 		args = append(args, "-f", s.AudioInput)
 		args = append(args, "-ac", strconv.Itoa(s.NAudioChannels))
 		args = append(args, "-i", fmt.Sprintf("hw:%d", s.Camera.CardId()))
-		args = append(args, "-f", s.VideoInputFormat)
-		args = append(args, "-i", s.Camera.Device)
-		args = append(args, "-preset", s.Preset)
-		args = append(args, "-tune", "zerolatency")
-		if s.VideoResolution != "" {
-			args = append(args, "-vf", "scale="+s.VideoResolution)
-		}
-		args = append(args, "-c:v", s.VideoEncoding)
+	}
+	args = append(args, "-f", s.VideoInputFormat)
+	args = append(args, "-i", s.Camera.Device)
+	args = append(args, "-preset", s.Preset)
+	args = append(args, "-tune", "zerolatency")
+	if s.VideoResolution != "" {
+		args = append(args, "-vf", "scale="+s.VideoResolution)
+	}
+	args = append(args, "-c:v", s.VideoEncoding)
+	if !s.AudioDisabled {
 		args = append(args, "-c:a", s.AudioEncoding)
 		args = append(args, "-ar", strconv.Itoa(s.AudioRate))
 		args = append(args, "-ab", strconv.Itoa(s.AverageBitRate))
-		args = append(args, "-f", s.OutputEncoding, uri)
-		//log.Printf("%s\n", strings.Join(append([]string{"ffmpeg"}, args...), " "))
-		cmd := exec.Command("ffmpeg", args...)
-		s.cmd = cmd
+	}
+	args = append(args, "-f", s.OutputEncoding, uri)
+	resp.Cmd = strings.Join(append([]string{"ffmpeg"}, args...), " ")
+	resp.Status = "on"
+	cmd := exec.Command("ffmpeg", args...)
+	s.cmd = cmd
+	go func() {
+		defer func() { s.Live = false }()
+		s.Live = true
 		err := cmd.Run()
 		if err != nil && !strings.Contains(err.Error(), "signal: killed") {
 			log.Printf("Failed to start stream: %s\n%s\n", strings.Join(append([]string{"ffmpeg"}, args...), " "), err)
 		}
 	}()
-	return uri
+	return resp
 }
 
 // Stop halts streaming a camera to an rtmp server.

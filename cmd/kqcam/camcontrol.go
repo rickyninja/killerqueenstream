@@ -29,6 +29,7 @@ var (
 	apihost         string
 	name            string
 	videoResolution string
+	audioDisabled   bool
 )
 
 var actionDispatch map[string]func()
@@ -36,6 +37,7 @@ var actionDispatch map[string]func()
 func init() {
 	flag.IntVar(&port, "port", 14000, "Set the service port")
 	flag.BoolVar(&debug, "debug", false, "print debugging info")
+	flag.BoolVar(&audioDisabled, "disable-audio", false, "Some sources don't support have mic/audio")
 	flag.StringVar(&action, "action", "", "Send a cab camera command")
 	flag.StringVar(&device, "device", "", "a camera device, like: /dev/video0")
 	flag.StringVar(&name, "name", "", "the name of a stream")
@@ -180,6 +182,7 @@ func configureStream(device, name string) {
 	stream.Camera.Device = device
 	stream.Name = name
 	stream.VideoResolution = videoResolution
+	stream.AudioDisabled = audioDisabled
 	b, err := json.Marshal(stream)
 	if err != nil {
 		log.Fatal(err)
