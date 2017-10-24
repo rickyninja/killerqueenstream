@@ -10,6 +10,9 @@ import (
 	"strings"
 )
 
+// starts playing stream quickly:
+// ffplay -probesize 32 -sync ext rtmp://localhost/killerqueen/blue
+
 // Stream represents configuration to send a stream to an rtmp server.
 type Stream struct {
 	Application      string    `json:"application"`
@@ -25,7 +28,6 @@ type Stream struct {
 	AudioInput       string    `json:"audio_input"`
 	AudioRate        int       `json:"audio_rate"`
 	AverageBitRate   int       `json:"average_bit_rate"`
-	NAudioChannels   int       `json:"n_audio_channels"`
 	OutputEncoding   string    `json:"output_encoding"`
 	Live             bool      `json:"live"`
 	Camera           Camera    `json:"camera"`
@@ -47,7 +49,6 @@ func NewStream() *Stream {
 		AudioInput:       "alsa",
 		AudioRate:        44100,
 		AverageBitRate:   96000,
-		NAudioChannels:   1,
 		OutputEncoding:   "flv",
 	}
 }
@@ -68,7 +69,7 @@ func (s *Stream) Start() startResponse {
 	args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
 	if !s.AudioDisabled {
 		args = append(args, "-f", s.AudioInput)
-		args = append(args, "-ac", strconv.Itoa(s.NAudioChannels))
+		args = append(args, "-ac", strconv.Itoa(s.Camera.NAudioChannels))
 		args = append(args, "-i", fmt.Sprintf("hw:%d", s.Camera.CardId()))
 	}
 	args = append(args, "-f", s.VideoInputFormat)
@@ -106,11 +107,24 @@ func (s *Stream) Stop() error {
 }
 
 type Camera struct {
-	Serial string `json:"serial"`
-	Model  string `json:"model"`
-	Vendor string `json:"vendor"`
-	IdPath string `json:"id_path"`
-	Device string `json:"device"`
+	Serial         string `json:"serial"`
+	Model          string `json:"model"`
+	Vendor         string `json:"vendor"`
+	IdPath         string `json:"id_path"`
+	Device         string `json:"device"`
+	NAudioChannels int    `json:"n_audio_channels"`
+}
+
+// Load hardware specific settings.
+func (c *Camera) LoadHardware() {
+	if c.Model == "HD_Pro_Webcam_C920" {
+		c.NAudioChannels = 2
+		// set default resolution?
+	}
+	// 1 may not be a valid value, but zero is never a valid value.
+	if c.NAudioChannels == 0 {
+		c.NAudioChannels = 1
+	}
 }
 
 /*

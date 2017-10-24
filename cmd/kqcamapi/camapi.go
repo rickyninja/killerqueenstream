@@ -121,6 +121,7 @@ func SetStreamConfig(w http.ResponseWriter, r *http.Request, param httprouter.Pa
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	cam.LoadHardware()
 	stream.Camera = cam
 
 	enc := json.NewEncoder(w)
