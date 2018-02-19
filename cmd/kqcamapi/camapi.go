@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -157,13 +156,15 @@ func StartCam(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 		return
 	}
 	start := stream.Start()
-	uri, err := url.Parse(start.URL)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	uri.Host = r.Host
-	start.URL = uri.String()
+	/*
+		uri, err := url.Parse(start.URL)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		uri.Host = r.Host
+		start.URL = uri.String()
+	*/
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "    ")

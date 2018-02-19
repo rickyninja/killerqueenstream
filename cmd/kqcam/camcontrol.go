@@ -27,6 +27,7 @@ var (
 	action          string
 	device          string
 	apihost         string
+	rtmphost        string
 	name            string
 	videoResolution string
 	audioDisabled   bool
@@ -35,6 +36,8 @@ var (
 var actionDispatch map[string]func()
 
 func init() {
+	flag.StringVar(&apihost, "host", "", "host runing the cam api service")
+	flag.StringVar(&rtmphost, "rtmphost", "127.0.0.1", "host runing the rtmp service")
 	flag.IntVar(&port, "port", 14000, "Set the service port")
 	flag.BoolVar(&debug, "debug", false, "print debugging info")
 	flag.BoolVar(&audioDisabled, "disable-audio", false, "Some sources don't support have mic/audio")
@@ -56,7 +59,7 @@ func init() {
 			getStreamConfig()
 		},
 		"setconfig": func() {
-			configureStream(device, name)
+			configureStream(device, name, rtmphost)
 		},
 		"caminfo": func() {
 			getCaminfo()
@@ -75,6 +78,13 @@ func init() {
 
 func main() {
 	flag.Parse()
+	if apihost == "" {
+		var err error
+		apihost, err = probe()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	f, ok := actionDispatch[action]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "%s is not a valid action!\n\n", action)
@@ -120,7 +130,8 @@ func startCam(name string) {
 		help()
 	}
 	args := map[string]string{
-		"name": name,
+		"name":     name,
+		"rtmphost": rtmphost,
 	}
 	buf := new(bytes.Buffer)
 	enc := json.NewEncoder(buf)
@@ -171,7 +182,7 @@ func stopCam(name string) {
 	fmt.Println(buf.String())
 }
 
-func configureStream(device, name string) {
+func configureStream(device, name, rtmphost string) {
 	if device == "" {
 		help()
 	}
@@ -181,6 +192,7 @@ func configureStream(device, name string) {
 	stream := kq.NewStream()
 	stream.Camera.Device = device
 	stream.Name = name
+	stream.Host = rtmphost
 	stream.VideoResolution = videoResolution
 	stream.AudioDisabled = audioDisabled
 	b, err := json.Marshal(stream)

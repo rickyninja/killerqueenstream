@@ -66,7 +66,7 @@ func (s *Stream) Start() startResponse {
 		URL: uri,
 	}
 	args := []string{}
-	args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
+	//args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
 	if !s.AudioDisabled {
 		args = append(args, "-f", s.AudioInput)
 		args = append(args, "-ac", strconv.Itoa(s.Camera.NAudioChannels))
