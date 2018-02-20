@@ -11,6 +11,7 @@ username=killerqueen
 remotehost=rickyninja.net
 remoteip=$(dig +short ${remotehost})
 sshopts="-o ExitOnForwardFailure=yes -o ServerAliveInterval=60"
+sshopts="$sshopts -i /home/jeremys/.ssh/brpi_rsa"
 verbose=0
 duration=60
 
@@ -31,14 +32,27 @@ while getopts 'v' flag; do
     esac
 done
 
+# tcp        0      0 10.0.0.118:22           10.0.0.146:54388        ESTABLISHED
+
+tunnelpid=0
 while true; do
-    netstat -an | awk '{print $5}' | sort -u | grep -qs "${remoteip}:22"
+    netstat -an | awk '$6 == "ESTABLISHED" {print $5}' | sort -u | grep -qs "${remoteip}:22"
     if [ $? -ne 0 ]; then
+        if [ ${tunnelpid} -ne 0 ]; then
+            [ ${verbose} -eq 1 ] && echo killing prior tunnel, pid ${tunnelpid}
+            kill ${tunnelpid}
+        fi
         [ ${verbose} -eq 1 ] && echo no tunnel seen
-        ssh -fN -R ${remoteport}:localhost:22 ${username}@${remotehost} ${sshopts}
-        if [ $? -ne 0 ]; then
+        ssh -N -R ${remoteport}:localhost:22 ${username}@${remotehost} ${sshopts} &
+        if [ $? -eq 0 ]; then
+	    tunnelpid=$!
+	    trap "{ kill ${tunnelpid}; exit; }" EXIT SIGINT SIGTERM
+	    [ ${verbose} -eq 1 ] && echo tunnelpid is $tunnelpid
+        else
             [ ${verbose} -eq 1 ] && echo failed to establish tunnel
         fi
+    else
+        [ ${verbose} -eq 1 ] && echo tunnel to ${remoteip} is established
     fi
     [ ${verbose} -eq 1 ] && echo sleeping
     sleep ${duration}
