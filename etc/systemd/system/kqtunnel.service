@@ -1,0 +1,9 @@
+[Unit]
+Description=ssh reverse tunnel from bonus round to home
+
+[Service]
+ExecStart=/home/jeremys/bin/brtunnel.sh
+User=jeremys
+
+[Install]
+WantedBy=multi-user.target
