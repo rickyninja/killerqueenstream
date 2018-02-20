@@ -59,6 +59,12 @@ type startResponse struct {
 	Cmd    string `json:"cmd"`
 }
 
+// use raspberry pi hardware encoder
+// sudo ffmpeg -f video4linux2 -i /dev/video0 -preset veryfast -tune zerolatency -c:v h264_omx -f flv rtmp://10.0.0.146/killerqueen/blue
+
+// probe camera's resolutions
+// ffmpeg -f v4l2 -list_formats all -i /dev/video0
+
 // Start begins streaming a camera to an rtmp server.
 func (s *Stream) Start() startResponse {
 	uri := "rtmp://" + s.Host + "/" + s.Application + "/" + s.Name
