@@ -1,0 +1,13 @@
+[Unit]
+Description=Nginx RTMP service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/nginx/sbin/nginx
+KillMode=process
+Restart=on-failure
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+Alias=nginxrtmp
