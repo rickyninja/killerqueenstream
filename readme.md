@@ -9,3 +9,7 @@
 
 ## Diagram
 <img src="images/stream-diagram.png" />
+
+# Installation
+
+[Install documentation](docs/install/readme.md)
