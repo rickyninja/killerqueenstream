@@ -13,3 +13,7 @@
 # Installation
 
 [Install documentation](docs/install/readme.md)
+
+# performance tuning for raspberry pi
+
+[pi perf tuning](docs/performance.md)
