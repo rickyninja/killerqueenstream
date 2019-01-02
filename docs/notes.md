@@ -11,3 +11,8 @@
 
 - an overview of linux usb
   https://www.linuxjournal.com/article/8093
+
+# USB power ports on/off
+
+- http://embeddedapocalypse.blogspot.com/2016/10/how-to-power-off-raspberry-pi-3-usb-or.html
+  - https://github.com/codazoda/hub-ctrl.c
