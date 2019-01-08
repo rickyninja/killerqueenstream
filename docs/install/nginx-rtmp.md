@@ -4,7 +4,7 @@ Install based on [peer5 docs](https://docs.peer5.com/guides/setting-up-hls-live-
 
 ## install nginx depends
 
-`sudo apt-get install build-essential libpcre3 libpcre3-dev libssl-dev`
+`sudo apt-get install build-essential libpcre3 libpcre3-dev libssl-dev zlib1g-dev`
 
 ## build and install from source
 
