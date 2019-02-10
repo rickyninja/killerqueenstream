@@ -2,6 +2,7 @@ package kq
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -96,13 +97,14 @@ func (s *Stream) Start() startResponse {
 	resp.Cmd = strings.Join(append([]string{"ffmpeg"}, args...), " ")
 	resp.Status = "on"
 	cmd := exec.Command("ffmpeg", args...)
+	cmd.Stderr = new(bytes.Buffer)
 	s.cmd = cmd
 	go func() {
 		defer func() { s.Live = false }()
 		s.Live = true
 		err := cmd.Run()
 		if err != nil && !strings.Contains(err.Error(), "signal: killed") {
-			log.Printf("Failed to start stream: %s\n%s\n", strings.Join(append([]string{"ffmpeg"}, args...), " "), err)
+			log.Printf("Failed to start stream: %s\n%s\n", strings.Join(append([]string{"ffmpeg"}, args...), " "), cmd.Stderr)
 		}
 	}()
 	return resp
