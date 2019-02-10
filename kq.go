@@ -3,6 +3,7 @@ package kq
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -147,7 +148,12 @@ func (c Camera) CardId() int {
 	path = strings.Replace(path, "usb-0:", "", 1)
 	path = path[:strings.LastIndex(path, ":")] // omit trailing :1.2 etc.
 
-	cardmap, err := getCardmap()
+	fd, err := os.Open("/proc/asound/cards")
+	if err != nil {
+		return 0
+	}
+	defer fd.Close()
+	cardmap, err := getCardmap(fd)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 0
@@ -175,15 +181,16 @@ jeremys@jeremys-desktop> cat /proc/asound/cards
 */
 
 // getCardmap builds a mapping of the device string (as seen in udevadm info and /proc/asound/cards) to card ID.
-func getCardmap() (map[string]int, error) {
+func getCardmap(r io.Reader) (map[string]int, error) {
 	m := make(map[string]int)
-	fd, err := os.Open("/proc/asound/cards")
-	if err != nil {
-		return m, err
-	}
-	scanner := bufio.NewScanner(fd)
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()
+		// line len check and comment check are for tests.
+		// Not expected from /proc/asound/cards.
+		if len(line) == 0 || strings.HasPrefix(line, "#") {
+			continue
+		}
 		fields := strings.Fields(line)
 		cardId, err := strconv.Atoi(fields[0])
 		if err != nil {
