@@ -2,9 +2,53 @@ package kq
 
 import (
 	"io"
+	"io/ioutil"
 	"strings"
 	"testing"
 )
+
+func TestCamera_CardId(t *testing.T) {
+	cases := []struct {
+		idpath string
+		want   int
+		asound io.ReadCloser
+	}{
+		{"platform-xhci-hcd.6.auto-usb-0:1.2:1.0", 2,
+			ioutil.NopCloser(strings.NewReader(`#
+ 0 [realtekrt5651co]: realtek_rt5651- - realtek,rt5651-codec
+                      realtek,rt5651-codec
+ 1 [rockchiphdmi   ]: rockchip_hdmi - rockchip,hdmi
+                      rockchip,hdmi
+ 2 [HDMI           ]: USB-Audio - USB Capture HDMI+
+                      Magewell USB Capture HDMI+ at usb-xhci-hcd.6.auto-1.2, super speed
+`)),
+		},
+		{"pci-0000:01:00.0-usb-0:2.1.2:1.2", 3,
+			ioutil.NopCloser(strings.NewReader(`#
+ 0 [NVidia         ]: HDA-Intel - HDA NVidia
+                      HDA NVidia at 0xef080000 irq 73
+ 1 [Generic        ]: HDA-Intel - HD-Audio Generic
+                      HD-Audio Generic at 0xef900000 irq 75
+ 2 [U0x46d0x80a    ]: USB-Audio - USB Device 0x46d:0x80a
+                      USB Device 0x46d:0x80a at usb-0000:00:1d.7-3, high speed
+ 3 [C615           ]: USB-Audio - HD Webcam C615
+                      HD Webcam C615 at usb-0000:01:00.0-2.1.2, high speed
+ 4 [C615           ]: USB-Audio - HD Webcam C615
+                      HD Webcam C615 at usb-0000:00:1a.7-6.1.2, high speed
+`)),
+		},
+	}
+	for _, tc := range cases {
+		cam := Camera{
+			IdPath: tc.idpath,
+			asound: func() io.ReadCloser { return tc.asound },
+		}
+		got := cam.CardId()
+		if got != tc.want {
+			t.Errorf("wrong Camera Id, got: %d want %d", got, tc.want)
+		}
+	}
+}
 
 func TestGetCardmap(t *testing.T) {
 	cases := []struct {

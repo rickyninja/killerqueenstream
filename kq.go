@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -122,6 +123,7 @@ type Camera struct {
 	IdPath         string `json:"id_path"`
 	Device         string `json:"device"`
 	NAudioChannels int    `json:"n_audio_channels"`
+	asound         func() io.ReadCloser
 }
 
 // Load hardware specific settings.
@@ -147,13 +149,20 @@ E: ID_PATH=pci-0000:00:1a.7-usb-0:6.1.2:1.2
 // CardId attempts to correlate this video device to a card ID for use with ffmpeg.
 func (c Camera) CardId() int {
 	path := strings.TrimPrefix(c.IdPath, "pci-")
+	path = strings.TrimPrefix(path, "platform-")
 	path = strings.Replace(path, "usb-0:", "", 1)
 	path = path[:strings.LastIndex(path, ":")] // omit trailing :1.2 etc.
 
-	fd, err := os.Open("/proc/asound/cards")
-	if err != nil {
-		return 0
+	if c.asound == nil {
+		c.asound = func() io.ReadCloser {
+			fd, err := os.Open("/proc/asound/cards")
+			if err != nil {
+				return ioutil.NopCloser(strings.NewReader(""))
+			}
+			return fd
+		}
 	}
+	fd := c.asound()
 	defer fd.Close()
 	cardmap, err := getCardmap(fd)
 	if err != nil {
@@ -162,7 +171,8 @@ func (c Camera) CardId() int {
 	}
 	id, ok := cardmap[path]
 	if !ok {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "Failed to find card for path: %s\n", path)
+		fmt.Fprintf(os.Stderr, "Full path is %s\n", c.IdPath)
 		return 0
 	}
 	return id
