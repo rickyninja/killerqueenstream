@@ -77,9 +77,10 @@ func (s *Stream) Start() startResponse {
 	args := []string{}
 	//args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
 	if !s.AudioDisabled {
+		cardId := s.Camera.CardId()
 		args = append(args, "-f", s.AudioInput)
-		args = append(args, "-ac", strconv.Itoa(s.Camera.NAudioChannels))
-		args = append(args, "-i", fmt.Sprintf("hw:%d", s.Camera.CardId()))
+		args = append(args, "-ac", strconv.Itoa(s.Camera.NAudioChannels(cardId)))
+		args = append(args, "-i", fmt.Sprintf("hw:%d", cardId))
 	}
 	args = append(args, "-f", s.VideoInputFormat)
 	args = append(args, "-i", s.Camera.Device)
@@ -117,25 +118,49 @@ func (s *Stream) Stop() error {
 }
 
 type Camera struct {
-	Serial         string `json:"serial"`
-	Model          string `json:"model"`
-	Vendor         string `json:"vendor"`
-	IdPath         string `json:"id_path"`
-	Device         string `json:"device"`
-	NAudioChannels int    `json:"n_audio_channels"`
-	asound         func() io.ReadCloser
+	Serial    string `json:"serial"`
+	Model     string `json:"model"`
+	Vendor    string `json:"vendor"`
+	IdPath    string `json:"id_path"`
+	Device    string `json:"device"`
+	asound    func() io.ReadCloser
+	asoundPcm func() io.ReadCloser
 }
 
-// Load hardware specific settings.
-func (c *Camera) LoadHardware() {
-	if c.Model == "HD_Pro_Webcam_C920" {
-		c.NAudioChannels = 2
-		// set default resolution?
+func (c *Camera) NAudioChannels(cardId int) int {
+	if c.asoundPcm == nil {
+		c.asoundPcm = func() io.ReadCloser {
+			fd, err := os.Open("/proc/asound/pcm")
+			if err != nil {
+				return ioutil.NopCloser(strings.NewReader(""))
+			}
+			return fd
+		}
 	}
-	// 1 may not be a valid value, but zero is never a valid value.
-	if c.NAudioChannels == 0 {
-		c.NAudioChannels = 1
+	rc := c.asoundPcm()
+	defer rc.Close()
+	scanner := bufio.NewScanner(rc)
+	var n int
+	for scanner.Scan() {
+		line := scanner.Text()
+		// line len check and comment check are for tests.
+		// Not expected from /proc/asound/pcm.
+		if len(line) == 0 || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if !strings.HasPrefix(line, fmt.Sprintf("%02d", cardId)) {
+			continue
+		}
+		if strings.Contains(line, "Audio") && strings.Contains(line, "capture") &&
+			!strings.Contains(line, "playback") {
+			n++
+		}
 	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "Scanner failed: %s\n", err)
+		return 0
+	}
+	return n
 }
 
 /*

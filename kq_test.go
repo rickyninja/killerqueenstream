@@ -7,6 +7,48 @@ import (
 	"testing"
 )
 
+func TestNChannels(t *testing.T) {
+	cases := []struct {
+		cardId int
+		want   int
+		pcm    func() io.ReadCloser
+	}{
+		{2, 2, func() io.ReadCloser {
+			r := strings.NewReader(`# cat /proc/asound/pcm
+00-00: ff890000.i2s-rt5651-aif1 rt5651-aif1-0 :  : playback 1 : capture 1
+01-00: ff8a0000.i2s-i2s-hifi i2s-hifi-0 :  : playback 1
+02-00: USB Audio : USB Audio : playback 1 : capture 1
+02-01: USB Audio : USB Audio #1 : capture 1
+02-02: USB Audio : USB Audio #2 : capture 1
+`)
+			return ioutil.NopCloser(r)
+		}},
+		{2, 1, func() io.ReadCloser {
+			r := strings.NewReader(`# cat /proc/asound/pcm
+00-03: HDMI 0 : HDMI 0 : playback 1
+00-07: HDMI 1 : HDMI 1 : playback 1
+00-08: HDMI 2 : HDMI 2 : playback 1
+00-09: HDMI 3 : HDMI 3 : playback 1
+01-00: Generic Analog : Generic Analog : playback 1 : capture 1
+01-01: Generic Digital : Generic Digital : playback 1
+01-02: Generic Alt Analog : Generic Alt Analog : capture 1
+02-00: USB Audio : USB Audio : capture 1
+`)
+			return ioutil.NopCloser(r)
+		}},
+	}
+	for _, tc := range cases {
+		cam := Camera{
+			asoundPcm: tc.pcm,
+		}
+		got := cam.NAudioChannels(tc.cardId)
+		if got != tc.want {
+			t.Errorf("wrong number of channels, got %d want %d", got, tc.want)
+			t.Logf("%#v", tc)
+		}
+	}
+}
+
 func TestCamera_CardId(t *testing.T) {
 	cases := []struct {
 		idpath string

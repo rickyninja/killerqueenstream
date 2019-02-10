@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/rickyninja/killerqueenstream"
+	kq "github.com/rickyninja/killerqueenstream"
 )
 
 func main() {
@@ -120,7 +120,6 @@ func SetStreamConfig(w http.ResponseWriter, r *http.Request, param httprouter.Pa
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	cam.LoadHardware()
 	stream.Camera = cam
 
 	enc := json.NewEncoder(w)
