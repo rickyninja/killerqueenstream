@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	go setDefaultStreams()
 	router := httprouter.New()
 	router.GET("/", Help)
 	router.GET("/caminfo", CamInfo)
@@ -26,6 +27,27 @@ func main() {
 	router.PUT("/startcam", StartCam)
 	router.PUT("/stopcam", StopCam)
 	log.Fatal(http.ListenAndServe(":14000", router))
+}
+
+// setDefaultStreams attempts to probe hardware and configure it in advance,
+// so it only needs to be turned on.
+func setDefaultStreams() {
+	running.Lock()
+	defer running.Unlock()
+
+	cams, err := probeCameras()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to probeCameras: %s\n", err)
+	}
+	for _, cam := range cams {
+		if cam.Vendor == "Magewell" {
+			stream := kq.NewStream()
+			stream.Camera = cam
+			stream.Name = "game"
+			running.Stream["game"] = stream
+		}
+		// TODO ID the logitech 920s somehow; serial numbers?
+	}
 }
 
 func Ping(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
@@ -155,16 +177,6 @@ func StartCam(w http.ResponseWriter, r *http.Request, param httprouter.Params) {
 		return
 	}
 	start := stream.Start()
-	/*
-		uri, err := url.Parse(start.URL)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		uri.Host = r.Host
-		start.URL = uri.String()
-	*/
-
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "    ")
 	err = enc.Encode(start)
