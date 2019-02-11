@@ -75,17 +75,16 @@ func (s *Stream) Start() startResponse {
 		URL: uri,
 	}
 	args := []string{}
-	//args = append(args, "-thread_queue_size", strconv.Itoa(s.ThreadQueueSize))
+	args = append(args, "-hide_banner")
 	if !s.AudioDisabled {
 		cardId := s.Camera.CardId()
 		args = append(args, "-f", s.AudioInput)
-		args = append(args, "-ac", strconv.Itoa(s.Camera.NAudioChannels(cardId)))
 		args = append(args, "-i", fmt.Sprintf("hw:%d", cardId))
+		args = append(args, "-ac", strconv.Itoa(s.Camera.NAudioChannels(cardId)))
 	}
 	args = append(args, "-f", s.VideoInputFormat)
+	args = append(args, "-r", "60")
 	args = append(args, "-i", s.Camera.Device)
-	args = append(args, "-preset", s.Preset)
-	args = append(args, "-tune", "zerolatency")
 	if s.VideoResolution != "" {
 		args = append(args, "-vf", "scale="+s.VideoResolution)
 	}
