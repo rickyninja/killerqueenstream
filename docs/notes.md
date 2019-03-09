@@ -16,3 +16,8 @@
 
 - http://embeddedapocalypse.blogspot.com/2016/10/how-to-power-off-raspberry-pi-3-usb-or.html
   - https://github.com/codazoda/hub-ctrl.c
+
+# duplicate /dev/video devices
+
+I'm seeing this on Armbian on the nanopi m4.  If you select the wrong device, ffmpeg commands fail with
+obscure ioctl error.
