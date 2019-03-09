@@ -14,14 +14,16 @@ ffmpeg -hide_banner \
 -i hw:$hw \
 -ac 2 \
 -f video4linux2 \
--r 60 \
+-r 30 \
 -i /dev/video0 \
+-vf scale=1280:720 \
+-preset ultrafast \
 -c:a aac \
 -c:v libx264 \
 -ar 44100 \
 -ab 96000 \
 -f flv \
-rtmp://localhost/killerqueen/1
+rtmp://localhost/killerqueen/game
 
 #ffmpeg -f video4linux2 -input_format mjpeg -i /dev/video0 -preset veryfast -tune zerolatency -c:v h264_omx -f flv rtmp://localhost/killerqueen/blue
 
